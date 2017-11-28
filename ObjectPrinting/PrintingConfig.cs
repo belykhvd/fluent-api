@@ -7,13 +7,15 @@ using System.Text;
 
 namespace ObjectPrinting
 {
+    //TODO RV(atolstov) попробуй сделать данный класс неизменяемым
     public class PrintingConfig<TOwner>
     {
         private readonly HashSet<Type> excludingTypes = new HashSet<Type>();
         private readonly HashSet<string> excludingProperties = new HashSet<string>();
         private readonly Dictionary<string, Delegate> propertiesSerializationFunctions = new Dictionary<string, Delegate>();
 
-        public int StringMaxLength { get; set; } = -1;
+        //TODO RV(atolstov) эти свойства должны быть private
+        public int StringMaxLength { get; set; } = -1;    
         public Dictionary<Type, Delegate> TypesSerializationFunctions { get; } = new Dictionary<Type, Delegate>();
         public Dictionary<Type, CultureInfo> NumericTypesCultureInfos { get; } = new Dictionary<Type, CultureInfo>();        
 
