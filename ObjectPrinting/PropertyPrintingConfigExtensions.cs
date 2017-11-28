@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace ObjectPrinting
 {
@@ -13,32 +8,28 @@ namespace ObjectPrinting
             int maxLength)
         {
             var parentConfig = ((IPropertyPrintingConfig<TOwner, string>)propertyPrintingConfig).ParentConfig;
-            parentConfig.StringMaxLength = maxLength;
-            return parentConfig;
+            return parentConfig.ChangeStringMaxLength(maxLength);            
         }
 
         public static PrintingConfig<TOwner> Using<TOwner>(this PropertyPrintingConfig<TOwner, double> propertyPrintingConfig,
             CultureInfo cultureInfo)
         {
             var parentConfig = ((IPropertyPrintingConfig<TOwner, double>) propertyPrintingConfig).ParentConfig;
-            parentConfig.NumericTypesCultureInfos[typeof(double)] = cultureInfo;
-            return parentConfig;
+            return parentConfig.AddNumericTypeCultureInfo(typeof(double), cultureInfo);            
         }
 
         public static PrintingConfig<TOwner> Using<TOwner>(this PropertyPrintingConfig<TOwner, float> propertyPrintingConfig,
             CultureInfo cultureInfo)
         {
             var parentConfig = ((IPropertyPrintingConfig<TOwner, float>)propertyPrintingConfig).ParentConfig;
-            parentConfig.NumericTypesCultureInfos[typeof(float)] = cultureInfo;
-            return parentConfig;
+            return parentConfig.AddNumericTypeCultureInfo(typeof(float), cultureInfo);
         }
 
         public static PrintingConfig<TOwner> Using<TOwner>(this PropertyPrintingConfig<TOwner, int> propertyPrintingConfig,
             CultureInfo cultureInfo)
         {
             var parentConfig = ((IPropertyPrintingConfig<TOwner, int>)propertyPrintingConfig).ParentConfig;
-            parentConfig.NumericTypesCultureInfos[typeof(int)] = cultureInfo;
-            return parentConfig;
+            return parentConfig.AddNumericTypeCultureInfo(typeof(int), cultureInfo);
         }
     }
 }

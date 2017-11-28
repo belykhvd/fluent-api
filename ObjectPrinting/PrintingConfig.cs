@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -8,26 +8,83 @@ using System.Text;
 namespace ObjectPrinting
 {
     public class PrintingConfig<TOwner>
-    {
-        private readonly HashSet<Type> excludingTypes = new HashSet<Type>();
-        private readonly HashSet<string> excludingProperties = new HashSet<string>();
-        private readonly Dictionary<string, Delegate> propertiesSerializationFunctions = new Dictionary<string, Delegate>();
+    {        
+        private ImmutableHashSet<Type> excludingTypes = ImmutableHashSet<Type>.Empty;
+        private ImmutableHashSet<string> excludingProperties = ImmutableHashSet<string>.Empty;        
+        private ImmutableDictionary<Type, Delegate> typesSerializationFunctions = ImmutableDictionary<Type, Delegate>.Empty;
+        private ImmutableDictionary<Type, CultureInfo> numericTypesCultureInfos = ImmutableDictionary<Type, CultureInfo>.Empty;
+        private ImmutableDictionary<string, Delegate> propertiesSerializationFunctions = ImmutableDictionary<string, Delegate>.Empty;
+        private int stringMaxLength = -1;
 
-        public int StringMaxLength { get; set; } = -1;
-        public Dictionary<Type, Delegate> TypesSerializationFunctions { get; } = new Dictionary<Type, Delegate>();
-        public Dictionary<Type, CultureInfo> NumericTypesCultureInfos { get; } = new Dictionary<Type, CultureInfo>();        
+        public PrintingConfig()
+        {           
+        }
+
+        public PrintingConfig(PrintingConfig<TOwner> printingConfig)
+        {
+            excludingTypes = printingConfig.excludingTypes;
+            excludingProperties = printingConfig.excludingProperties;
+            typesSerializationFunctions = printingConfig.typesSerializationFunctions;
+            numericTypesCultureInfos = printingConfig.numericTypesCultureInfos;
+            propertiesSerializationFunctions = printingConfig.propertiesSerializationFunctions;
+            stringMaxLength = printingConfig.stringMaxLength;
+        }
 
         public PrintingConfig<TOwner> ExcludingType<TPropType>()
-        {            
-            excludingTypes.Add(typeof(TPropType));
-            return this;
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                excludingTypes = excludingTypes.Add(typeof(TPropType))
+            };
         }
 
         public PrintingConfig<TOwner> ExcludingProperty(string name)
-        {
-            excludingProperties.Add(name);
-            return this;
+        {            
+            return new PrintingConfig<TOwner>(this)
+            {
+                excludingProperties = excludingProperties.Add(name)
+            };
         }
+
+        public PrintingConfig<TOwner> PrintingProperty<TPropType>(string name, Func<TPropType, string> serializationFunction)
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                propertiesSerializationFunctions = propertiesSerializationFunctions.Add(name, serializationFunction)
+            };
+        }
+
+        public PrintingConfig<TOwner> AddTypeSerializationFunction(Type type, Delegate function)
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                typesSerializationFunctions = typesSerializationFunctions.Add(type, function)
+            };            
+        }
+
+        public PrintingConfig<TOwner> AddNumericTypeCultureInfo(Type type, CultureInfo cultureInfo)
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                numericTypesCultureInfos = numericTypesCultureInfos.Add(type, cultureInfo)
+            };
+        }
+
+        public PrintingConfig<TOwner> AddPropertySerializationFunction(string name, Delegate function)
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                propertiesSerializationFunctions = propertiesSerializationFunctions.Add(name, function)
+            };
+        }
+
+        public PrintingConfig<TOwner> ChangeStringMaxLength(int maxLength)
+        {
+            return new PrintingConfig<TOwner>(this)
+            {
+                stringMaxLength = maxLength
+            };
+        }        
 
         public PropertyPrintingConfig<TOwner, TPropType> Printing<TPropType>()
         {
@@ -38,13 +95,7 @@ namespace ObjectPrinting
         {
             return new PropertyPrintingConfig<TOwner, TPropType>(this);
         }
-
-        public PrintingConfig<TOwner> PrintingProperty<TPropType>(string name, Func<TPropType, string> serializationFunction)
-        {
-            propertiesSerializationFunctions[name] = serializationFunction;
-            return this;
-        }        
-
+          
         public string PrintToString(TOwner obj) => PrintToString(obj, 0);
 
         private string PrintToString(object obj, int nestingLevel)
@@ -53,10 +104,10 @@ namespace ObjectPrinting
                 return "null" + Environment.NewLine;
 
             var objectType = obj.GetType();
-            var serializeWithFunction =
-                TypesSerializationFunctions.TryGetValue(objectType, out var serializationFunction);
+            var serializeWithFunction = 
+                typesSerializationFunctions.TryGetValue(objectType, out var serializationFunction);
 
-            var isNumericWithCulture = NumericTypesCultureInfos.TryGetValue(objectType, out var numericCulture);
+            var isNumericWithCulture = numericTypesCultureInfos.TryGetValue(objectType, out var numericCulture);
 
             var finalTypes = new[]
             {
@@ -72,11 +123,11 @@ namespace ObjectPrinting
                         ? ((IFormattable) obj).ToString(null, numericCulture)
                         : obj.ToString();
 
-                if (StringMaxLength >= 0
+                if (stringMaxLength >= 0
                     && objectType == typeof(string)
-                    && representation.Length > StringMaxLength)
+                    && representation.Length > stringMaxLength)
                 {
-                    representation = representation.Substring(0, StringMaxLength);
+                    representation = representation.Substring(0, stringMaxLength);
                 }
 
                 return representation + Environment.NewLine;
@@ -100,14 +151,13 @@ namespace ObjectPrinting
                     continue;
 
                 var propertyName = propertyInfo.Name;
-                if (nestingLevel == 0 && excludingProperties.Contains(propertyName))
-                    continue;
-
-                if (nestingLevel == 0 
-                    && propertiesSerializationFunctions.TryGetValue(propertyName, out serializationFunction))
+                switch (nestingLevel)
                 {
-                    sb.AppendLine($"{identation}{propertyInfo.Name} = {serializationFunction.DynamicInvoke(propertyInfo.GetValue(obj))}");
-                    continue;                    
+                    case 0 when excludingProperties.Contains(propertyName):
+                        continue;
+                    case 0 when propertiesSerializationFunctions.TryGetValue(propertyName, out serializationFunction):
+                        sb.AppendLine($"{identation}{propertyInfo.Name} = {serializationFunction.DynamicInvoke(propertyInfo.GetValue(obj))}");
+                        continue;
                 }
 
                 sb.Append($"{identation}{propertyInfo.Name} = {PrintToString(propertyInfo.GetValue(obj), nestingLevel + 1)}");

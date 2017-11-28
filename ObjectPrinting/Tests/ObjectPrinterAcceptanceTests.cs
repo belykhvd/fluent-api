@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace ObjectPrinting.Tests
 {
@@ -23,8 +24,12 @@ namespace ObjectPrinting.Tests
             var s1 = printer.PrintToString(person);
             TestContext.WriteLine(s1);
 
-			//7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
-			//8. ...с конфигурированием
+		    var s2 = ObjectPrinter.For<Person>()                
+                .Default()                                                //7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
+                .PrintToString(person);             
+            TestContext.WriteLine($"{Environment.NewLine}{s2}");
+
+		    //8. ...с конфигурированием
 		}
 	}
 }

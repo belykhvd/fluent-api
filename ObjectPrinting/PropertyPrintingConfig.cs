@@ -14,9 +14,6 @@ namespace ObjectPrinting
         }
 
         public PrintingConfig<TOwner> Using(Func<TPropType, string> serializationFunction)
-        {
-            printingConfig.TypesSerializationFunctions[typeof(TPropType)] = serializationFunction;
-            return printingConfig;
-        }
+            => printingConfig.AddTypeSerializationFunction(typeof(TPropType), serializationFunction);
     }
 }
