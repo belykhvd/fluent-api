@@ -24,12 +24,13 @@ namespace ObjectPrinting.Tests
             var s1 = printer.PrintToString(person);
             TestContext.WriteLine(s1);
 
-		    var s2 = ObjectPrinter.For<Person>()                
-                .Default()                                                //7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
-                .PrintToString(person);             
+		    //7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
+            var s2 = person.PrintToString();                
             TestContext.WriteLine($"{Environment.NewLine}{s2}");
 
 		    //8. ...с конфигурированием
-		}
+		    var s3 = person.PrintToString(s => s.ExcludingProperty("Age"));
+		    TestContext.WriteLine($"{Environment.NewLine}{s3}");
+        }
 	}
 }
