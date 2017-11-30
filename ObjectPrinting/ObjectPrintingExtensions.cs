@@ -8,6 +8,8 @@ namespace ObjectPrinting
         public static string PrintToString(this object serializableObject)
         {
             return ObjectPrinter.For<object>()
+				//TODO RV(atolstov) опять же, почему ты определяешь конкретный список форматируемых типов? Используй IFormatable
+				// Да и зачем их вообще конфигурировать по-умолчанию? Разве .ToString() не раьотает так же?
                 .AddNumericTypeCultureInfo(typeof(int), CultureInfo.CurrentCulture)
                 .AddNumericTypeCultureInfo(typeof(float), CultureInfo.CurrentCulture)
                 .AddNumericTypeCultureInfo(typeof(double), CultureInfo.CurrentCulture)

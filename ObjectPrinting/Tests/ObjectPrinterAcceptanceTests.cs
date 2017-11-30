@@ -17,7 +17,9 @@ namespace ObjectPrinting.Tests
 		        .ExcludingType<Guid>()                                    //1. Исключить из сериализации свойства определенного типа
 		        .Printing<int>().Using(i => (i + 1).ToString())           //2. Указать альтернативный способ сериализации для определенного типа		        
 		        .Printing<double>().Using(CultureInfo.InstalledUICulture) //3. Для числовых типов указать культуру
-		        .PrintingProperty<string>("Name", p => p + " I")          //4. Настроить сериализацию конкретного свойства
+				//TODO RV(atolstov) плохо просить ввести имя свойства. Реализуй вот такой синтаксис (почитай про Expression):
+			    //.PrintingProperty<string>(o => o.Name, p => p + " I")
+				.PrintingProperty<string>("Name", p => p + " I")          //4. Настроить сериализацию конкретного свойства
 		        .Printing<string>().TrimmedToLength(4)                    //5. Настроить обрезание строковых свойств (метод должен быть виден только для строковых свойств)
 		        .ExcludingProperty("Age");                                //6. Исключить из сериализации конкретного свойства
 

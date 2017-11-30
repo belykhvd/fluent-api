@@ -11,7 +11,8 @@ namespace ObjectPrinting
             return parentConfig.ChangeStringMaxLength(maxLength);            
         }
 
-        public static PrintingConfig<TOwner> Using<TOwner>(this PropertyPrintingConfig<TOwner, double> propertyPrintingConfig,
+		//TODO RV(atolstov) Почему этот метод определен только для double, float и int? А как же ushort, ... . Для того чтоб не писать кучу однотипных методов присмотрись к IFormattable
+		public static PrintingConfig<TOwner> Using<TOwner>(this PropertyPrintingConfig<TOwner, double> propertyPrintingConfig,
             CultureInfo cultureInfo)
         {
             var parentConfig = ((IPropertyPrintingConfig<TOwner, double>) propertyPrintingConfig).ParentConfig;
