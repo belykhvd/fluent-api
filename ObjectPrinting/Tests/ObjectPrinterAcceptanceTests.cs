@@ -17,19 +17,19 @@ namespace ObjectPrinting.Tests
 		        .ExcludingType<Guid>()                                    //1. Исключить из сериализации свойства определенного типа
 		        .Printing<int>().Using(i => (i + 1).ToString())           //2. Указать альтернативный способ сериализации для определенного типа		        
 		        .Printing<double>().Using(CultureInfo.InstalledUICulture) //3. Для числовых типов указать культуру
-		        .PrintingProperty<string>("Name", p => p + " I")          //4. Настроить сериализацию конкретного свойства
+		        .Printing(o => o.Name).Using(p => p + " I")               //4. Настроить сериализацию конкретного свойства
 		        .Printing<string>().TrimmedToLength(4)                    //5. Настроить обрезание строковых свойств (метод должен быть виден только для строковых свойств)
-		        .ExcludingProperty("Age");                                //6. Исключить из сериализации конкретного свойства
+		        .ExcludingProperty(o => o.Age);                           //6. Исключить из сериализации конкретного свойства
 
             var s1 = printer.PrintToString(person);
             TestContext.WriteLine(s1);
 
 		    //7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
             var s2 = person.PrintToString();                
-            TestContext.WriteLine($"{Environment.NewLine}{s2}");
+            TestContext.WriteLine($"{Environment.NewLine}{s2}");            
 
 		    //8. ...с конфигурированием
-		    var s3 = person.PrintToString(s => s.ExcludingProperty("Age"));
+		    var s3 = person.PrintToString(s => s.ExcludingProperty(o => o.Age));
 		    TestContext.WriteLine($"{Environment.NewLine}{s3}");
         }
 	}

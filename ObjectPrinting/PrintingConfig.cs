@@ -38,19 +38,12 @@ namespace ObjectPrinting
             };
         }
 
-        public PrintingConfig<TOwner> ExcludingProperty(string name)
-        {            
-            return new PrintingConfig<TOwner>(this)
-            {
-                excludingProperties = excludingProperties.Add(name)
-            };
-        }
-
-        public PrintingConfig<TOwner> PrintingProperty<TPropType>(string name, Func<TPropType, string> serializationFunction)
+        public PrintingConfig<TOwner> ExcludingProperty<TPropType>(Expression<Func<TOwner, TPropType>> selector)
         {
+            var propertyName = ((MemberExpression) selector.Body).Member.Name;
             return new PrintingConfig<TOwner>(this)
             {
-                propertiesSerializationFunctions = propertiesSerializationFunctions.Add(name, serializationFunction)
+                excludingProperties = excludingProperties.Add(propertyName)
             };
         }
 
@@ -84,8 +77,8 @@ namespace ObjectPrinting
             {
                 stringMaxLength = maxLength
             };
-        }        
-
+        }
+        
         public PropertyPrintingConfig<TOwner, TPropType> Printing<TPropType>()
         {
             return new PropertyPrintingConfig<TOwner, TPropType>(this);
@@ -93,7 +86,8 @@ namespace ObjectPrinting
 
         public PropertyPrintingConfig<TOwner, TPropType> Printing<TPropType>(Expression<Func<TOwner, TPropType>> selector)
         {
-            return new PropertyPrintingConfig<TOwner, TPropType>(this);
+            var propertyName = ((MemberExpression)selector.Body).Member.Name;
+            return new PropertyPrintingConfig<TOwner, TPropType>(this, propertyName);
         }
           
         public string PrintToString(TOwner obj) => PrintToString(obj, 0);
